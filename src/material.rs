@@ -14,7 +14,13 @@ pub struct Lambertian {
 #[derive(Copy, Clone, Debug)]
 pub struct Metal {
   pub albedo: Color,
+  // Should be at most 1
   pub fuzz: f64,
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct Dielectric {
+  pub ir: f64,
 }
 
 impl Material for Lambertian {
@@ -45,5 +51,20 @@ impl Material for Metal {
     } else {
       None
     }
+  }
+}
+
+impl Material for Dielectric {
+  fn scatter(&self, r_in: &Ray, rec: &HitRecord) -> Option<(Ray, Color)> {
+    let attenuation = Color {x: 1., y: 1., z: 1.};
+    let refraction_ratio = if rec.front_face {
+      1.0 / self.ir
+    } else {
+      self.ir
+    };
+
+    let unit_direction = r_in.direction.unit();
+    let refracted = unit_direction.refract(&rec.normal, refraction_ratio);
+    Some((Ray { origin: rec.p, direction: refracted}, attenuation))
   }
 }

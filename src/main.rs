@@ -8,12 +8,12 @@ mod camera;
 mod material;
 mod utils;
 
-use vec3::{Vec3, Point3, Color};
+use vec3::{Point3, Color};
 use ray::Ray;
 use hittable::{Hittable, HittableList};
 use sphere::Sphere;
 use camera::{Camera, IMAGE_WIDTH, IMAGE_HEIGHT};
-use material::{Lambertian, Metal};
+use material::{Lambertian, Metal, Dielectric};
 
 const SAMPLES_PER_PIXEL: u32 = 100;
 const MAX_DEPTH: u32 = 50;
@@ -22,8 +22,8 @@ const BG_WHITE: Color = Color {x: 1., y: 1., z: 1.};
 const BG_BLUE: Color = Color {x: 0.5, y: 0.7, z: 1.};
 
 const MATERIAL_GROUND: Lambertian = Lambertian {albedo: Color {x: 0.8, y: 0.8, z: 0.0}};
-const MATERIAL_CENTER: Lambertian = Lambertian {albedo: Color {x: 0.7, y: 0.3, z: 0.3}};
-const MATERIAL_LEFT: Metal = Metal {albedo: Color {x: 0.8, y: 0.8, z: 0.8}, fuzz: 0.3};
+const MATERIAL_CENTER: Dielectric = Dielectric {ir: 1.5};
+const MATERIAL_LEFT: Dielectric = Dielectric {ir: 1.5};
 const MATERIAL_RIGHT: Metal = Metal {albedo: Color {x: 0.8, y: 0.6, z: 0.2}, fuzz: 1.};
 
 fn ray_color(r: &Ray, world: & dyn Hittable, depth: u32) -> Color {

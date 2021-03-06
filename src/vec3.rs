@@ -47,6 +47,13 @@ impl Vec3 {
     *self - (*n * self.dot(n)) * 2.
   }
 
+  pub fn refract(&self, n: &Vec3, etai_over_etat: f64) -> Vec3 {
+    let cos_theta = f64::min((-*self).dot(n), 1.);
+    let r_out_perp = (*self + (*n * cos_theta)) * etai_over_etat;
+    let r_out_parallel = *n * -(1. - r_out_perp.length_squared()).abs().sqrt();
+    r_out_perp + r_out_parallel
+  }
+
   pub fn color_string(&self, samples_per_pixel: u32) -> String {
     let Color {x: r, y: g, z: b} = *self / (samples_per_pixel as f64);
 
