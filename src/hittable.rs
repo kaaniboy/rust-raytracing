@@ -1,17 +1,19 @@
 use super::vec3::{Point3, Vec3};
 use super::ray::Ray;
+use super::material::Material;
 
-#[derive(Copy, Clone, Debug)]
-pub struct HitRecord {
+#[derive(Copy, Clone)]
+pub struct HitRecord<'a> {
   pub p: Point3,
   pub normal: Vec3,
+  pub material: &'a dyn Material,
   pub t: f64,
   pub front_face: bool,
 }
 
-impl HitRecord {
+impl HitRecord<'_> {
   pub fn set_face_normal(&mut self, r: &Ray, outward_normal: &Vec3) {
-    self.front_face = r.direction.dot(*outward_normal) < 0.;
+    self.front_face = r.direction.dot(outward_normal) < 0.;
     self.normal = if self.front_face {
       *outward_normal      
     } else {

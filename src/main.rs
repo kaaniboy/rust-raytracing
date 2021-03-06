@@ -5,6 +5,7 @@ mod ray;
 mod hittable;
 mod sphere;
 mod camera;
+mod material;
 mod utils;
 
 use vec3::{Vec3, Point3, Color};
@@ -12,6 +13,7 @@ use ray::Ray;
 use hittable::{Hittable, HittableList};
 use sphere::Sphere;
 use camera::{Camera, IMAGE_WIDTH, IMAGE_HEIGHT};
+use material::{Lambertian, Metal};
 
 const SAMPLES_PER_PIXEL: u32 = 100;
 const MAX_DEPTH: u32 = 50;
@@ -19,15 +21,21 @@ const MAX_DEPTH: u32 = 50;
 const BG_WHITE: Color = Color {x: 1., y: 1., z: 1.};
 const BG_BLUE: Color = Color {x: 0.5, y: 0.7, z: 1.};
 
+const MATERIAL_GROUND: Lambertian = Lambertian {albedo: Color {x: 0.8, y: 0.8, z: 0.0}};
+const MATERIAL_CENTER: Lambertian = Lambertian {albedo: Color {x: 0.7, y: 0.3, z: 0.3}};
+const MATERIAL_LEFT: Metal = Metal {albedo: Color {x: 0.8, y: 0.8, z: 0.8}, fuzz: 0.3};
+const MATERIAL_RIGHT: Metal = Metal {albedo: Color {x: 0.8, y: 0.6, z: 0.2}, fuzz: 1.};
+
 fn ray_color(r: &Ray, world: & dyn Hittable, depth: u32) -> Color {
   if depth == 0 {
     return Color {x: 0., y: 0., z: 0.};
   }
 
   if let Some(rec) = world.hit(r, 0.001, std::f64::INFINITY) {
-    let target = rec.p + rec.normal + Vec3::random_in_unit_sphere();
-    let r2 = Ray { origin: rec.p, direction: target - rec.p};
-    return ray_color(&r2, world, depth - 1) * 0.5;
+    if let Some((scattered, attenuation)) = rec.material.scatter(r, &rec) {
+      return attenuation * ray_color(&scattered, world, depth - 1);
+    }
+    return Color {x: 0., y: 0., z: 0.};
   }
 
   let unit_direction = r.direction.unit();
@@ -37,15 +45,28 @@ fn ray_color(r: &Ray, world: & dyn Hittable, depth: u32) -> Color {
 
 fn main() {
   let camera = Camera::new();
+
   let world = HittableList {
     objects: vec![
       Box::new(Sphere {
-        center: Point3 {x: 0., y: 0., z: -1.},
-        radius: 0.5
+        center: Point3 {x: 0., y: -100.5, z: -1.},
+        radius: 100.,
+        material: &MATERIAL_GROUND,
       }),
       Box::new(Sphere {
-        center: Point3 {x: 0., y: -100.5, z: -1.},
-        radius: 100.
+        center: Point3 {x: 0., y: 0., z: -1.},
+        radius: 0.5,
+        material: &MATERIAL_CENTER,
+      }),
+      Box::new(Sphere {
+        center: Point3 {x: -1., y: 0., z: -1.},
+        radius: 0.5,
+        material: &MATERIAL_LEFT,
+      }),
+      Box::new(Sphere {
+        center: Point3 {x: 1., y: 0., z: -1.},
+        radius: 0.5,
+        material: &MATERIAL_RIGHT,
       })
     ]
   };
